@@ -1,3 +1,4 @@
+import * as cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
 import {
   DocumentBuilder,
@@ -6,13 +7,29 @@ import {
 } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
+  app.use(cookieParser());
   const config = new DocumentBuilder()
     .setTitle('Real-time Leaderboard')
     .setDescription('A real-time leaderboard system for ranking and scoring.')
     .setVersion('1.0.0')
+    .addBearerAuth()
+    .addTag('Auth')
     .build();
   const options: SwaggerDocumentOptions = {
     operationIdFactory: (_controllerKey: string, methodKey: string) =>

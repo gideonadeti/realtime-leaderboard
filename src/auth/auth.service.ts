@@ -80,7 +80,7 @@ export class AuthService {
   }
 
   private createAuthPayload(user: Partial<User>) {
-    return { email: user.email, sub: user.id, jti: uuidv4() };
+    return { email: user.email, sub: user.id, role: user.role, jti: uuidv4() };
   }
 
   private getToken(payload: AuthPayload, type: 'access' | 'refresh') {
@@ -183,6 +183,7 @@ export class AuthService {
     });
 
     if (!user) return null;
+    if (!user.password) return null;
 
     const isCorrectPassword = await bcrypt.compare(pass, user.password);
 

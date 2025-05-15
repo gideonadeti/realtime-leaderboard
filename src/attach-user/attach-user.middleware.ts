@@ -1,24 +1,20 @@
 import { AuthObject, clerkClient } from '@clerk/express';
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NextFunction, Request } from 'express';
 
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AttachUserMiddleware implements NestMiddleware {
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   private readonly logger = new Logger(AttachUserMiddleware.name);
 
   async use(req: Request & { auth: AuthObject }, res: any, next: NextFunction) {
     const auth = req.auth;
 
-    if (auth) {
-      const userId = auth.userId as string;
+    if (auth.userId) {
+      const userId = auth.userId;
 
       try {
         let user = await this.prismaService.user.findUnique({

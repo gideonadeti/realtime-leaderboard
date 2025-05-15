@@ -183,6 +183,7 @@ export class AuthService {
     });
 
     if (!user) return null;
+    if (!user.password) return null;
 
     const isCorrectPassword = await bcrypt.compare(pass, user.password);
 

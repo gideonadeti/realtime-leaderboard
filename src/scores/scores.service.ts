@@ -76,7 +76,13 @@ export class ScoresService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} score`;
+  async remove(userId: string, id: string) {
+    try {
+      return await this.prismaService.score.delete({
+        where: { id, userId },
+      });
+    } catch (error) {
+      this.handleError(error, `delete score with id ${id}`);
+    }
   }
 }

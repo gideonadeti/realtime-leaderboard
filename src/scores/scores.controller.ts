@@ -47,7 +47,7 @@ export class ScoresController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.scoresService.remove(+id);
+  remove(@UserId() userId: string, @Param('id') id: string) {
+    return this.scoresService.remove(userId, id);
   }
 }

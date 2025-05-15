@@ -41,6 +41,7 @@ async function bootstrap() {
     .addBearerAuth()
     .addTag('Auth')
     .addTag('Activities')
+    .addTag('Scores')
     .build();
   const options: SwaggerDocumentOptions = {
     operationIdFactory: (_controllerKey: string, methodKey: string) =>

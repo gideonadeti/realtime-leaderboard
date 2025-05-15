@@ -12,16 +12,19 @@ import {
 import { ScoresService } from './scores.service';
 import { CreateScoreDto } from './dto/create-score.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
-import { ClerkAuthGuard } from 'src/auth/guards/clerk-auth.guard';
+import { UserId } from 'src/user-id/user-id.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
-@UseGuards(ClerkAuthGuard)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('scores')
 export class ScoresController {
   constructor(private readonly scoresService: ScoresService) {}
 
   @Post()
-  create(@Body() createScoreDto: CreateScoreDto) {
-    return this.scoresService.create(createScoreDto);
+  create(@UserId() userId: string, @Body() createScoreDto: CreateScoreDto) {
+    return this.scoresService.create(userId, createScoreDto);
   }
 
   @Get()

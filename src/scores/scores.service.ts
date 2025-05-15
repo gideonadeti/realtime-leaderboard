@@ -24,8 +24,17 @@ export class ScoresService {
 
     throw new InternalServerErrorException(`Failed to ${action}`);
   }
-  create(createScoreDto: CreateScoreDto) {
-    return 'This action adds a new score';
+  async create(userId: string, createScoreDto: CreateScoreDto) {
+    try {
+      return await this.prismaService.score.create({
+        data: {
+          ...createScoreDto,
+          userId,
+        },
+      });
+    } catch (error) {
+      this.handleError(error, 'create score');
+    }
   }
 
   findAll() {

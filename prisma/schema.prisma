@@ -18,6 +18,7 @@ model User {
 
   role         UserRole
   refreshToken RefreshToken?
+  activities   Activity[]
 }
 
 enum UserRole {
@@ -33,4 +34,14 @@ model RefreshToken {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  adminId   String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }

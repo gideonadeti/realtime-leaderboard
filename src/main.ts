@@ -8,6 +8,7 @@ import {
 
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { clerkMiddleware } from '@clerk/express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,8 +23,9 @@ async function bootstrap() {
       },
     }),
   );
-
   app.use(cookieParser());
+  app.use(clerkMiddleware());
+
   const config = new DocumentBuilder()
     .setTitle('Real-time Leaderboard')
     .setDescription('A real-time leaderboard system for ranking and scoring.')

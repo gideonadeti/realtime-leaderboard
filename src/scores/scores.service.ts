@@ -49,8 +49,20 @@ export class ScoresService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} score`;
+  async findOne(userId: string, id: string) {
+    try {
+      const score = await this.prismaService.score.findUnique({
+        where: { id, userId },
+      });
+
+      if (!score) {
+        throw new BadRequestException(`Score with id ${id} not found`);
+      }
+
+      return score;
+    } catch (error) {
+      this.handleError(error, `fetch score with id ${id}`);
+    }
   }
 
   update(id: number, updateScoreDto: UpdateScoreDto) {

@@ -18,6 +18,7 @@ import { RolesGuard } from 'src/roles/roles.guard';
 import { UserRole } from 'generated/prisma';
 import { Roles } from 'src/roles/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { UserId } from 'src/user-id/user-id.decorator';
 
 @ApiTags('Activities')
 @Controller('activities')
@@ -28,8 +29,11 @@ export class ActivitiesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Post()
-  create(@Body() createActivityDto: CreateActivityDto) {
-    return this.activitiesService.create(createActivityDto);
+  create(
+    @UserId() userId: string,
+    @Body() createActivityDto: CreateActivityDto,
+  ) {
+    return this.activitiesService.create(userId, createActivityDto);
   }
 
   @UseGuards(ClerkAuthGuard)

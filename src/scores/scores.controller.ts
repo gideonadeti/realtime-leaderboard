@@ -28,8 +28,8 @@ export class ScoresController {
   }
 
   @Get()
-  findAll() {
-    return this.scoresService.findAll();
+  findAll(@UserId() userId: string) {
+    return this.scoresService.findAll(userId);
   }
 
   @Get(':id')

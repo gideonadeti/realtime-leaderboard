@@ -37,8 +37,16 @@ export class ScoresService {
     }
   }
 
-  findAll() {
-    return `This action returns all scores`;
+  async findAll(userId: string) {
+    try {
+      return await this.prismaService.score.findMany({
+        where: {
+          userId,
+        },
+      });
+    } catch (error) {
+      this.handleError(error, `fetch scores for user with id ${userId}`);
+    }
   }
 
   findOne(id: number) {

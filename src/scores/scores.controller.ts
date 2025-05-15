@@ -38,8 +38,12 @@ export class ScoresController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateScoreDto: UpdateScoreDto) {
-    return this.scoresService.update(+id, updateScoreDto);
+  update(
+    @UserId() userId: string,
+    @Param('id') id: string,
+    @Body() updateScoreDto: UpdateScoreDto,
+  ) {
+    return this.scoresService.update(userId, id, updateScoreDto);
   }
 
   @Delete(':id')

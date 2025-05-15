@@ -65,8 +65,15 @@ export class ScoresService {
     }
   }
 
-  update(id: number, updateScoreDto: UpdateScoreDto) {
-    return `This action updates a #${id} score`;
+  async update(userId: string, id: string, updateScoreDto: UpdateScoreDto) {
+    try {
+      return await this.prismaService.score.update({
+        where: { id, userId },
+        data: updateScoreDto,
+      });
+    } catch (error) {
+      this.handleError(error, `update score with id ${id}`);
+    }
   }
 
   remove(id: number) {

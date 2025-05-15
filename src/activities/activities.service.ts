@@ -69,8 +69,19 @@ export class ActivitiesService {
     }
   }
 
-  update(id: number, updateActivityDto: UpdateActivityDto) {
-    return `This action updates a #${id} activity`;
+  async update(
+    userId: string,
+    id: string,
+    updateActivityDto: UpdateActivityDto,
+  ) {
+    try {
+      return await this.prismaService.activity.update({
+        where: { id, adminId: userId },
+        data: updateActivityDto,
+      });
+    } catch (error) {
+      this.handleError(error, `update activity with id ${id}`);
+    }
   }
 
   remove(id: number) {

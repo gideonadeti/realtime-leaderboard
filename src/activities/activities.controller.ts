@@ -53,10 +53,11 @@ export class ActivitiesController {
   @Roles(UserRole.ADMIN)
   @Patch(':id')
   update(
+    @UserId() userId: string,
     @Param('id') id: string,
     @Body() updateActivityDto: UpdateActivityDto,
   ) {
-    return this.activitiesService.update(+id, updateActivityDto);
+    return this.activitiesService.update(userId, id, updateActivityDto);
   }
 
   @ApiBearerAuth()

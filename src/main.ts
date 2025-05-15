@@ -1,5 +1,8 @@
 import * as cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { clerkMiddleware } from '@clerk/express';
+import { ConfigService } from '@nestjs/config';
 import {
   DocumentBuilder,
   SwaggerDocumentOptions,
@@ -7,11 +10,16 @@ import {
 } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
-import { clerkMiddleware } from '@clerk/express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+  const frontendBaseUrl = configService.get<string>('FRONTEND_BASE_URL');
+
+  app.enableCors({
+    origin: [frontendBaseUrl],
+    credentials: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

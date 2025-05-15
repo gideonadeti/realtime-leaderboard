@@ -84,7 +84,13 @@ export class ActivitiesService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} activity`;
+  async remove(userId: string, id: string) {
+    try {
+      return await this.prismaService.activity.delete({
+        where: { id, adminId: userId },
+      });
+    } catch (error) {
+      this.handleError(error, `delete activity with id ${id}`);
+    }
   }
 }

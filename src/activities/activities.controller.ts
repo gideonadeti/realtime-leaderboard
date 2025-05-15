@@ -64,7 +64,7 @@ export class ActivitiesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.activitiesService.remove(+id);
+  remove(@UserId() userId: string, @Param('id') id: string) {
+    return this.activitiesService.remove(userId, id);
   }
 }

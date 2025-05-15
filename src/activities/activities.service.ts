@@ -45,8 +45,12 @@ export class ActivitiesService {
     }
   }
 
-  findAll() {
-    return `This action returns all activities`;
+  async findAll() {
+    try {
+      return await this.prismaService.activity.findMany();
+    } catch (error) {
+      this.handleError(error, 'fetch activities');
+    }
   }
 
   findOne(id: number) {

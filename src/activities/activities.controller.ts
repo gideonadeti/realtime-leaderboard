@@ -17,32 +17,35 @@ import { ClerkAuthGuard } from 'src/auth/guards/clerk-auth.guard';
 import { RolesGuard } from 'src/roles/roles.guard';
 import { UserRole } from 'generated/prisma';
 import { Roles } from 'src/roles/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiTags('Activities')
-@ApiBearerAuth()
-@UseGuards(ClerkAuthGuard)
 @Controller('activities')
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Post()
   create(@Body() createActivityDto: CreateActivityDto) {
     return this.activitiesService.create(createActivityDto);
   }
 
+  @UseGuards(ClerkAuthGuard)
   @Get()
   findAll() {
     return this.activitiesService.findAll();
   }
 
+  @UseGuards(ClerkAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.activitiesService.findOne(+id);
   }
 
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Patch(':id')
   update(
@@ -52,7 +55,8 @@ export class ActivitiesController {
     return this.activitiesService.update(+id, updateActivityDto);
   }
 
-  @UseGuards(RolesGuard)
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {

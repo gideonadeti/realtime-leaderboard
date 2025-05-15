@@ -4,6 +4,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { AuthModule } from './auth/auth.module';
 import { LoggingMiddleware } from './logging/logging.middleware';
 import { ActivitiesModule } from './activities/activities.module';
+import { AttachUserMiddleware } from './attach-user/attach-user.middleware';
 
 @Module({
   imports: [AuthModule, ActivitiesModule],
@@ -12,6 +13,6 @@ import { ActivitiesModule } from './activities/activities.module';
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggingMiddleware).forRoutes('*');
+    consumer.apply(LoggingMiddleware, AttachUserMiddleware).forRoutes('*');
   }
 }

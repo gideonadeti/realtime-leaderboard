@@ -53,8 +53,20 @@ export class ActivitiesService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} activity`;
+  async findOne(id: string) {
+    try {
+      const activity = await this.prismaService.activity.findUnique({
+        where: { id },
+      });
+
+      if (!activity) {
+        throw new BadRequestException(`Activity with id ${id} not found`);
+      }
+
+      return activity;
+    } catch (error) {
+      this.handleError(error, `fetch activity with id ${id}`);
+    }
   }
 
   update(id: number, updateActivityDto: UpdateActivityDto) {

@@ -45,7 +45,7 @@ export class ActivitiesController {
   @UseGuards(ClerkAuthGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.activitiesService.findOne(+id);
+    return this.activitiesService.findOne(id);
   }
 
   @ApiBearerAuth()

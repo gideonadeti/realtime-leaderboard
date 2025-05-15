@@ -8,10 +8,14 @@ import {
 import { CreateScoreDto } from './dto/create-score.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class ScoresService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private redisService: RedisService,
+  ) {}
 
   private logger = new Logger(ScoresService.name);
 
@@ -26,12 +30,22 @@ export class ScoresService {
   }
   async create(userId: string, createScoreDto: CreateScoreDto) {
     try {
-      return await this.prismaService.score.create({
+      const score = await this.prismaService.score.create({
         data: {
           ...createScoreDto,
           userId,
         },
       });
+      const response = await this.redisService.addScore(
+        createScoreDto.activityId,
+        userId,
+        createScoreDto.value,
+      );
+
+      return {
+        ...score,
+        currentScore: +response,
+      };
     } catch (error) {
       this.handleError(error, 'create score');
     }

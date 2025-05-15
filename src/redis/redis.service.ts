@@ -21,4 +21,8 @@ export class RedisService implements OnModuleInit {
       port,
     });
   }
+
+  async addScore(activityId: string, userId: string, value: number) {
+    return this.client.zincrby(activityId, value, userId);
+  }
 }

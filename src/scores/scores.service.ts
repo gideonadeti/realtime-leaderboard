@@ -41,6 +41,7 @@ export class ScoresService {
         userId,
         createScoreDto.value,
       );
+      await this.redisService.addScore('global', userId, createScoreDto.value);
 
       return {
         ...score,

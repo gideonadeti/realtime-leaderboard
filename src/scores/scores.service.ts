@@ -45,7 +45,7 @@ export class ScoresService {
 
       return {
         ...score,
-        currentScore: +response,
+        currentScore: Number(response),
       };
     } catch (error) {
       this.handleError(error, 'create score');

@@ -47,7 +47,7 @@ export class RedisService implements OnModuleInit {
     const users: { userId: string; score: number }[] = [];
 
     for (let i = 0; i < response.length; i += 2) {
-      users.push({ userId: response[i], score: +response[i + 1] });
+      users.push({ userId: response[i], score: Number(response[i + 1]) });
     }
 
     return users;

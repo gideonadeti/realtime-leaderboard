@@ -47,7 +47,15 @@ export class ActivitiesService {
 
   async findAll() {
     try {
-      return await this.prismaService.activity.findMany();
+      return await this.prismaService.activity.findMany({
+        include: {
+          scores: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
     } catch (error) {
       this.handleError(error, 'fetch activities');
     }

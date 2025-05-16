@@ -84,7 +84,20 @@ export class ScoresService {
           }),
         );
       } else {
-        return;
+        const topUsers = await this.redisService.getTopUsers(id);
+        users = await Promise.all(
+          topUsers.map(async ({ userId, score }) => {
+            const user = await this.prismaService.user.findUnique({
+              where: { id: userId },
+            });
+
+            return {
+              id: userId,
+              name: user?.name ?? 'Anonymous',
+              score,
+            };
+          }),
+        );
       }
 
       return users;

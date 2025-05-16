@@ -36,4 +36,20 @@ export class RedisService implements OnModuleInit {
 
     return users;
   }
+
+  async getTopUsers(activityId: string) {
+    const response = await this.client.zrevrange(
+      activityId,
+      0,
+      -1,
+      'WITHSCORES',
+    );
+    const users: { userId: string; score: number }[] = [];
+
+    for (let i = 0; i < response.length; i += 2) {
+      users.push({ userId: response[i], score: +response[i + 1] });
+    }
+
+    return users;
+  }
 }

@@ -25,4 +25,15 @@ export class RedisService implements OnModuleInit {
   async addScore(activityId: string, userId: string, value: number) {
     return this.client.zincrby(activityId, value, userId);
   }
+
+  async getTopUsersGlobal() {
+    const response = await this.client.zrevrange('global', 0, -1, 'WITHSCORES');
+    const users: { userId: string; score: number }[] = [];
+
+    for (let i = 0; i < response.length; i += 2) {
+      users.push({ userId: response[i], score: +response[i + 1] });
+    }
+
+    return users;
+  }
 }

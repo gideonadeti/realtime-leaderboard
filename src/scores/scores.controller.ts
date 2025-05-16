@@ -32,6 +32,11 @@ export class ScoresController {
     return this.scoresService.findAll(userId);
   }
 
+  @Get('leaderboard/:id')
+  findLeaderboard(@Param('id') id: string) {
+    return this.scoresService.findLeaderboard(id);
+  }
+
   @Get(':id')
   findOne(@UserId() userId: string, @Param('id') id: string) {
     return this.scoresService.findOne(userId, id);

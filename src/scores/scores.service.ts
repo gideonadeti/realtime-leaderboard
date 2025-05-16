@@ -64,6 +64,35 @@ export class ScoresService {
     }
   }
 
+  async findLeaderboard(id: string) {
+    try {
+      let users: { id: string; name: string; score: number }[] = [];
+
+      if (id === 'global') {
+        const topUsersGlobal = await this.redisService.getTopUsersGlobal();
+        users = await Promise.all(
+          topUsersGlobal.map(async ({ userId, score }) => {
+            const user = await this.prismaService.user.findUnique({
+              where: { id: userId },
+            });
+
+            return {
+              id: userId,
+              name: user?.name ?? 'Anonymous',
+              score,
+            };
+          }),
+        );
+      } else {
+        return;
+      }
+
+      return users;
+    } catch (error) {
+      this.handleError(error, `fetch leaderboard for activity with id ${id}`);
+    }
+  }
+
   async findOne(userId: string, id: string) {
     try {
       const score = await this.prismaService.score.findUnique({

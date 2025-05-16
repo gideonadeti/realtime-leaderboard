@@ -51,7 +51,12 @@ export class ActivitiesService {
         include: {
           scores: {
             include: {
-              user: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },

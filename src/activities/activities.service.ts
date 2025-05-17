@@ -99,6 +99,7 @@ export class ActivitiesService {
             id: userId,
             name: user?.name ?? 'Anonymous',
             score,
+            rank: topUsers.indexOf({ userId, score }) + 1,
           };
         }),
       );

@@ -35,6 +35,9 @@ export class ScoresService {
           ...createScoreDto,
           userId,
         },
+        include: {
+          user: true,
+        },
       });
       const response = await this.redisService.addScore(
         createScoreDto.activityId,

@@ -47,6 +47,12 @@ export class ActivitiesController {
     return this.activitiesService.findOne(id);
   }
 
+  @UseGuards(ClerkAuthGuard)
+  @Get(':id/leaderboard')
+  findLeaderboard(@Param('id') id: string) {
+    return this.activitiesService.findLeaderboard(id);
+  }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)

@@ -10,10 +10,14 @@ import { CreateActivityDto } from './dto/create-activity.dto';
 import { UpdateActivityDto } from './dto/update-activity.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'generated/prisma';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class ActivitiesService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private redisService: RedisService,
+  ) {}
 
   private logger = new Logger(ActivitiesService.name);
 
@@ -79,6 +83,48 @@ export class ActivitiesService {
       return activity;
     } catch (error) {
       this.handleError(error, `fetch activity with id ${id}`);
+    }
+  }
+
+  async findLeaderboard(id: string) {
+    try {
+      let users: { id: string; name: string; score: number }[] = [];
+
+      if (id === 'global') {
+        const topUsersGlobal = await this.redisService.getTopUsersGlobal();
+        users = await Promise.all(
+          topUsersGlobal.map(async ({ userId, score }) => {
+            const user = await this.prismaService.user.findUnique({
+              where: { id: userId },
+            });
+
+            return {
+              id: userId,
+              name: user?.name ?? 'Anonymous',
+              score,
+            };
+          }),
+        );
+      } else {
+        const topUsers = await this.redisService.getTopUsers(id);
+        users = await Promise.all(
+          topUsers.map(async ({ userId, score }) => {
+            const user = await this.prismaService.user.findUnique({
+              where: { id: userId },
+            });
+
+            return {
+              id: userId,
+              name: user?.name ?? 'Anonymous',
+              score,
+            };
+          }),
+        );
+      }
+
+      return users;
+    } catch (error) {
+      this.handleError(error, `fetch leaderboard for activity with id ${id}`);
     }
   }
 

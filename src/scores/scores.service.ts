@@ -36,7 +36,12 @@ export class ScoresService {
           userId,
         },
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
       const response = await this.redisService.addScore(

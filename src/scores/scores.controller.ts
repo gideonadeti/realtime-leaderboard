@@ -13,11 +13,11 @@ import { ScoresService } from './scores.service';
 import { CreateScoreDto } from './dto/create-score.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { UserId } from 'src/user-id/user-id.decorator';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ClerkAuthGuard } from 'src/auth/guards/clerk-auth.guard';
 
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ClerkAuthGuard)
 @Controller('scores')
 export class ScoresController {
   constructor(private readonly scoresService: ScoresService) {}

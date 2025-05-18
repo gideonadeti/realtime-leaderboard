@@ -17,6 +17,8 @@ export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
 
   private userSocketMap = new Map<string, string>();
 
+  private logger = new Logger(LeaderboardGateway.name);
+
   @WebSocketServer()
   server: Server;
 
@@ -25,7 +27,7 @@ export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
       wsClerkAuthMiddleware(this.authService)(socket, next).catch(next);
     });
 
-    Logger.log('WebSocket server initialized', LeaderboardGateway.name);
+    this.logger.log('WebSocket server initialized');
   }
 
   handleConnection(client: Socket & { user: AuthPayload }) {
@@ -33,10 +35,7 @@ export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
 
     this.userSocketMap.set(userId, client.id);
 
-    Logger.log(
-      `Client with id ${client.id} connected`,
-      LeaderboardGateway.name,
-    );
+    this.logger.log(`Client with id ${client.id} connected`);
   }
 
   handleDisconnect(client: Socket & { user: AuthPayload }) {
@@ -44,9 +43,6 @@ export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
 
     this.userSocketMap.delete(userId);
 
-    Logger.log(
-      `Client with id ${client.id} disconnected`,
-      LeaderboardGateway.name,
-    );
+    this.logger.log(`Client with id ${client.id} disconnected`);
   }
 }

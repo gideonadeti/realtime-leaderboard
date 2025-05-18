@@ -1,10 +1,5 @@
 import { AuthObject } from '@clerk/express';
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Request } from 'express';
 
 @Injectable()
@@ -13,11 +8,6 @@ export class ClerkAuthGuard implements CanActivate {
     const request = context
       .switchToHttp()
       .getRequest<Request & { auth: AuthObject }>();
-
-    Logger.log(
-      `Cookies: ${JSON.stringify(request.cookies)}`,
-      ClerkAuthGuard.name,
-    );
 
     return request.auth.userId !== null;
   }

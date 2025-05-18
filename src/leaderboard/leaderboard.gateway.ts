@@ -38,4 +38,15 @@ export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
       LeaderboardGateway.name,
     );
   }
+
+  handleDisconnect(client: Socket & { user: AuthPayload }) {
+    const userId = client.user.sub;
+
+    this.userSocketMap.delete(userId);
+
+    Logger.log(
+      `Client with id ${client.id} disconnected`,
+      LeaderboardGateway.name,
+    );
+  }
 }

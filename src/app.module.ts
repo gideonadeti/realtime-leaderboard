@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 import { PrismaService } from './prisma/prisma.service';
 import { AuthModule } from './auth/auth.module';
@@ -8,6 +9,8 @@ import { ActivitiesModule } from './activities/activities.module';
 import { AttachUserMiddleware } from './attach-user/attach-user.middleware';
 import { ScoresModule } from './scores/scores.module';
 import { RedisService } from './redis/redis.service';
+import { LeaderboardGateway } from './leaderboard/leaderboard.gateway';
+import { AuthService } from './auth/auth.service';
 
 @Module({
   imports: [
@@ -17,7 +20,13 @@ import { RedisService } from './redis/redis.service';
     ScoresModule,
   ],
   controllers: [],
-  providers: [PrismaService, RedisService],
+  providers: [
+    PrismaService,
+    RedisService,
+    LeaderboardGateway,
+    AuthService,
+    JwtService,
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Socket } from 'socket.io';
+import { verifyToken } from '@clerk/express';
 import {
   ConflictException,
   Injectable,
@@ -17,7 +18,6 @@ import { Prisma, User } from 'generated/prisma';
 import { SignUpDto } from './dto/sign-up.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthPayload } from './auth-payload.interface';
-import { verifyToken } from '@clerk/express';
 
 const REFRESH_COOKIE_CONFIG = {
   httpOnly: true,

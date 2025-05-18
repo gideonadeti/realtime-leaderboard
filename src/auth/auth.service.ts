@@ -1,5 +1,4 @@
 import * as bcrypt from 'bcryptjs';
-import * as cookie from 'cookie';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
@@ -198,21 +197,15 @@ export class AuthService {
     return rest;
   }
 
-  async validateClient(client: Socket & { user: any }) {
-    const rawCookie = client.handshake.headers.cookie;
+  async validateClient(client: Socket & { user?: any }) {
+    const token = (client.handshake.auth as { token: string | undefined })
+      .token;
 
-    if (!rawCookie) {
-      throw new UnauthorizedException('No cookies found');
+    if (!token) {
+      throw new UnauthorizedException('No Clerk token found');
     }
 
-    const cookies = cookie.parse(rawCookie);
-    const sessionToken = cookies.__session;
-
-    if (!sessionToken) {
-      throw new UnauthorizedException('No Clerk session token found');
-    }
-
-    const payload = await verifyToken(sessionToken, {
+    const payload = await verifyToken(token, {
       secretKey: process.env.CLERK_SECRET_KEY,
     });
 

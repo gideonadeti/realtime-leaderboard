@@ -8,6 +8,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 
 import { ActivitiesService } from './activities.service';
@@ -19,6 +20,7 @@ import { UserRole } from 'generated/prisma';
 import { Roles } from 'src/roles/roles.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/user-id/user-id.decorator';
+import { FindReportDto } from './dto/find-report.dto';
 
 @Controller('activities')
 export class ActivitiesController {
@@ -51,6 +53,12 @@ export class ActivitiesController {
   @Get(':id/leaderboard')
   findLeaderboard(@Param('id') id: string) {
     return this.activitiesService.findLeaderboard(id);
+  }
+
+  @UseGuards(ClerkAuthGuard)
+  @Get(':id/report')
+  findReport(@Param('id') id: string, @Query() query: FindReportDto) {
+    return this.activitiesService.findReport(id, query);
   }
 
   @ApiBearerAuth()

@@ -11,6 +11,7 @@ import { UpdateActivityDto } from './dto/update-activity.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'generated/prisma';
 import { RedisService } from 'src/redis/redis.service';
+import { FindReportDto } from './dto/find-report.dto';
 
 @Injectable()
 export class ActivitiesService {
@@ -108,6 +109,62 @@ export class ActivitiesService {
       return users;
     } catch (error) {
       this.handleError(error, `fetch leaderboard for activity with id ${id}`);
+    }
+  }
+
+  async findReport(id: string, query: FindReportDto) {
+    const { fromDate, toDate } = query;
+
+    try {
+      // Fetch scores based on date filters and activity id
+      const scores = await this.prismaService.score.groupBy({
+        by: ['userId'],
+        where: {
+          activityId: id === 'global' ? undefined : id,
+          createdAt: {
+            gte: fromDate,
+            lte: toDate,
+          },
+        },
+        _sum: {
+          value: true,
+        },
+        orderBy: {
+          _sum: {
+            value: 'desc',
+          },
+        },
+      });
+
+      // Fetch user data
+      const users = await this.prismaService.user.findMany({
+        where: {
+          id: { in: scores.map((s) => s.userId) },
+        },
+        select: {
+          id: true,
+          name: true,
+          clerkId: true,
+        },
+      });
+
+      // Map userId to user info
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      // Add user data and ranking
+      return scores.map((s, index) => {
+        const user = userMap.get(s.userId);
+
+        return {
+          id: s.userId,
+          clerkId: user?.clerkId,
+          name: user?.name,
+          score: s._sum.value,
+          rank: index + 1,
+        };
+      });
+    } catch (error) {
+      this.handleError(error, `fetch report for activity with id ${id}`);
     }
   }
 

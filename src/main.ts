@@ -1,6 +1,6 @@
 import * as cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { clerkMiddleware } from '@clerk/express';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -15,6 +15,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const frontendBaseUrl = configService.get<string>('FRONTEND_BASE_URL');
+
+  Logger.log(`CORS Origin: ${frontendBaseUrl}`);
+  Logger.log(
+    `CORS Origin equals vercel frontend: ${frontendBaseUrl === 'https://realtime-leaderboard-frontend.vercel.app'}`,
+  );
 
   app.enableCors({
     origin: [frontendBaseUrl],

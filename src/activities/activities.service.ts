@@ -97,6 +97,7 @@ export class ActivitiesService {
 
           return {
             id: userId,
+            clerkId: user?.clerkId,
             name: user?.name ?? 'Anonymous',
             score,
             rank: index + 1,

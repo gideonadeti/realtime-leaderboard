@@ -15,11 +15,7 @@ export class ClerkAuthGuard implements CanActivate {
       .getRequest<Request & { auth: AuthObject }>();
 
     Logger.log(
-      `Request auth: ${JSON.stringify(request.auth)}`,
-      ClerkAuthGuard.name,
-    );
-    Logger.log(
-      `Request auth userId: ${JSON.stringify(request.auth)}`,
+      `Cookies: ${JSON.stringify(request.cookies)}`,
       ClerkAuthGuard.name,
     );
 

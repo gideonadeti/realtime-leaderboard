@@ -45,4 +45,8 @@ export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
 
     this.logger.log(`Client with id ${client.id} disconnected`);
   }
+
+  emitToClients(event: string, data: any) {
+    this.server.emit(event, data);
+  }
 }

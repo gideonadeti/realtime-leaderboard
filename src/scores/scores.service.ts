@@ -9,12 +9,16 @@ import { CreateScoreDto } from './dto/create-score.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
+import { LeaderboardGateway } from 'src/leaderboard/leaderboard.gateway';
+import { ActivitiesService } from 'src/activities/activities.service';
 
 @Injectable()
 export class ScoresService {
   constructor(
     private prismaService: PrismaService,
     private redisService: RedisService,
+    private leaderboardGateway: LeaderboardGateway,
+    private activitiesService: ActivitiesService,
   ) {}
 
   private logger = new Logger(ScoresService.name);
@@ -49,7 +53,25 @@ export class ScoresService {
         userId,
         createScoreDto.value,
       );
+
       await this.redisService.addScore('global', userId, createScoreDto.value);
+
+      // Get updated leaderboards
+      const activityLeaderboard = await this.activitiesService.findLeaderboard(
+        createScoreDto.activityId,
+      );
+      const globalLeaderboard =
+        await this.activitiesService.findLeaderboard('global');
+
+      // Emit updated leaderboards
+      this.leaderboardGateway.emitToClients(
+        `activities:${createScoreDto.activityId}:leaderboard`,
+        activityLeaderboard,
+      );
+      this.leaderboardGateway.emitToClients(
+        `activities:global:leaderboard`,
+        globalLeaderboard,
+      );
 
       return {
         ...score,

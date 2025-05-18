@@ -1,7 +1,10 @@
 import * as bcrypt from 'bcryptjs';
+import * as cookie from 'cookie';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { Socket } from 'socket.io';
+import { verifyToken } from '@clerk/express';
 import {
   ConflictException,
   Injectable,
@@ -193,5 +196,26 @@ export class AuthService {
     const { password, ...rest } = user;
 
     return rest;
+  }
+
+  async validateClient(client: Socket & { user: any }) {
+    const rawCookie = client.handshake.headers.cookie;
+
+    if (!rawCookie) {
+      throw new UnauthorizedException('No cookies found');
+    }
+
+    const cookies = cookie.parse(rawCookie);
+    const sessionToken = cookies.__session;
+
+    if (!sessionToken) {
+      throw new UnauthorizedException('No Clerk session token found');
+    }
+
+    const payload = await verifyToken(sessionToken, {
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
+
+    client.user = payload;
   }
 }

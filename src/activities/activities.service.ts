@@ -90,16 +90,17 @@ export class ActivitiesService {
     try {
       const topUsers = await this.redisService.getTopUsers(id);
       const users = await Promise.all(
-        topUsers.map(async ({ userId, score }) => {
+        topUsers.map(async ({ userId, score }, index) => {
           const user = await this.prismaService.user.findUnique({
             where: { id: userId },
           });
 
           return {
             id: userId,
+            clerkId: user?.clerkId,
             name: user?.name ?? 'Anonymous',
             score,
-            rank: topUsers.indexOf({ userId, score }) + 1,
+            rank: index + 1,
           };
         }),
       );

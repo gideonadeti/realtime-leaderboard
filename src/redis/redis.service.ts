@@ -41,4 +41,8 @@ export class RedisService implements OnModuleInit {
 
     return users;
   }
+
+  async removeUser(activityId: string, userId: string) {
+    return this.client.zrem(activityId, userId);
+  }
 }

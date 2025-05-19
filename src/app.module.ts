@@ -11,6 +11,7 @@ import { ScoresModule } from './scores/scores.module';
 import { RedisService } from './redis/redis.service';
 import { LeaderboardGateway } from './leaderboard/leaderboard.gateway';
 import { AuthService } from './auth/auth.service';
+import { WebhooksController } from './webhooks/webhooks.controller';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { AuthService } from './auth/auth.service';
     ConfigModule.forRoot({ isGlobal: true }),
     ScoresModule,
   ],
-  controllers: [],
+  controllers: [WebhooksController],
   providers: [
     PrismaService,
     RedisService,

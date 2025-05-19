@@ -1,4 +1,5 @@
 import * as cookieParser from 'cookie-parser';
+import * as express from 'express';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { clerkMiddleware } from '@clerk/express';
@@ -31,6 +32,7 @@ async function bootstrap() {
   );
   app.use(cookieParser());
   app.use(clerkMiddleware());
+  app.use('/webhooks', express.raw({ type: 'application/json' }));
 
   const config = new DocumentBuilder()
     .setTitle('Real-time Leaderboard')

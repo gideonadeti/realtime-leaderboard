@@ -43,6 +43,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
+    "svix": "^1.65.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

@@ -9,6 +9,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { ActivitiesService } from './activities.service';
@@ -58,6 +59,15 @@ export class ActivitiesController {
   @UseGuards(ClerkAuthGuard)
   @Get(':id/report')
   findReport(@Param('id') id: string, @Query() query: FindReportDto) {
+    const { fromDate, toDate } = query;
+
+    if (fromDate > toDate) {
+      throw new BadRequestException(`fromDate cannot be greater than toDate`);
+    }
+    if (toDate > new Date()) {
+      throw new BadRequestException(`toDate cannot be in the future`);
+    }
+
     return this.activitiesService.findReport(id, query);
   }
 

@@ -36,13 +36,19 @@ export class WebhooksController {
         case 'user.updated':
           await this.handleUserUpdated(clerkId);
           break;
+        case 'user.created':
+          await this.handleUserCreated(clerkId);
+          break;
         default:
           this.logger.log(`Unhandled Clerk event type: ${event.type}`);
       }
 
       return res.sendStatus(204);
     } catch (error) {
-      this.logger.error('Error verifying webhook', (error as Error).stack);
+      this.logger.error(
+        'Something went wrong in `handleClerkWebhook`',
+        (error as Error).stack,
+      );
 
       return res.sendStatus(400);
     }
@@ -121,5 +127,17 @@ export class WebhooksController {
     });
 
     this.logger.log(`User ${user.id} updated with name and email`);
+  }
+
+  private async handleUserCreated(clerkId: string) {
+    const clerkUser = await clerkClient.users.getUser(clerkId);
+
+    await this.prismaService.user.create({
+      data: {
+        name: clerkUser.fullName as string,
+        email: clerkUser.primaryEmailAddress!.emailAddress,
+        clerkId: clerkId,
+      },
+    });
   }
 }

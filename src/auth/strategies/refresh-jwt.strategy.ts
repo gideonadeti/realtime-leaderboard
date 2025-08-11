@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
 
-import { jwtConstants } from '../jwt.constants';
 import { UserRole } from 'generated/prisma';
 
 @Injectable()
@@ -11,13 +11,15 @@ export class RefreshJwtStrategy extends PassportStrategy(
   Strategy,
   'refresh-jwt',
 ) {
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
+    const secret = configService.get('JWT_REFRESH_SECRET') as string;
+
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req: Request) =>
           (req.cookies as { refreshToken: string }).refreshToken,
       ]),
-      secretOrKey: jwtConstants.refreshSecret as string,
+      secretOrKey: secret,
     });
   }
 

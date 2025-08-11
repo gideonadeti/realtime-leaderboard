@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Socket } from 'socket.io';
 import { verifyToken } from '@clerk/express';
+import { ConfigService } from '@nestjs/config';
 import {
   ConflictException,
   Injectable,
@@ -12,7 +13,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { jwtConstants } from './jwt.constants';
 import { Prisma, User } from 'generated/prisma';
 import { SignUpDto } from './dto/sign-up.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -31,6 +31,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private prismaService: PrismaService,
+    private configService: ConfigService,
   ) {}
 
   private logger = new Logger(AuthService.name);
@@ -88,7 +89,7 @@ export class AuthService {
   private getToken(payload: AuthPayload, type: 'access' | 'refresh') {
     return this.jwtService.sign(payload, {
       ...(type === 'refresh' && {
-        secret: jwtConstants.refreshSecret,
+        secret: this.configService.get('JWT_REFRESH_SECRET') as string,
         expiresIn: '7d',
       }),
     });
@@ -206,7 +207,7 @@ export class AuthService {
     }
 
     const payload = await verifyToken(token, {
-      secretKey: process.env.CLERK_SECRET_KEY,
+      secretKey: this.configService.get('CLERK_SECRET_KEY') as string,
     });
 
     client.user = payload;

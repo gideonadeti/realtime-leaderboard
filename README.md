@@ -1,6 +1,6 @@
 # Real-time Leaderboard
 
-A real-time leaderboard application for ranking and scoring.
+A full-stack application that allows users to compete in various activities, track their scores, and view their rankings on a leaderboard.
 
 ## Features
 

@@ -1,4 +1,4 @@
-import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiBody } from '@nestjs/swagger';
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Player } from '@prisma/client';
@@ -7,8 +7,6 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RefreshJwtAuthGuard } from './guards/refresh-jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,26 +21,10 @@ export class AuthController {
   @ApiBody({ type: SignInDto })
   @UseGuards(LocalAuthGuard)
   @Post('sign-in')
-  async signIn(
+  signIn(
     @Req() req: Request & { user: Partial<Player> },
     @Res() res: Response,
   ) {
     return this.authService.signIn(req.user, res);
-  }
-
-  @UseGuards(RefreshJwtAuthGuard)
-  @Post('refresh')
-  async refresh(@Req() req: Request, @Res() res: Response) {
-    return this.authService.refresh(req, res);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Post('sign-out')
-  async signOut(
-    @Req() req: Request & { user: Partial<Player> },
-    @Res() res: Response,
-  ) {
-    return this.authService.signOut(req.user, res);
   }
 }

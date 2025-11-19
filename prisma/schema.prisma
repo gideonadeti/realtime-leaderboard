@@ -14,18 +14,7 @@ model Player {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  refreshToken RefreshToken?
-  games        Game[]
-}
-
-model RefreshToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  playerId  String   @unique @db.ObjectId
-  value     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  games Game[]
 }
 
 model Game {

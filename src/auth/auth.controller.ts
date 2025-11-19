@@ -19,6 +19,7 @@ export class AuthController {
     return this.authService.signUp(signUpDto, res);
   }
 
+  // Explicitly define request body schema for Swagger, since @Body() isn't used due to LocalAuthGuard extracting credentials
   @ApiBody({ type: SignInDto })
   @UseGuards(LocalAuthGuard)
   @Post('sign-in')

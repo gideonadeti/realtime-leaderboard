@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class SignInDto {
   /**
    * Player's username
-   * @example "johndoe"
+   * @example johndoe
    */
   @IsString()
   @IsNotEmpty()
@@ -11,7 +11,7 @@ export class SignInDto {
 
   /**
    * Player's password
-   * @example "strongPassword"
+   * @example strongPassword
    */
   @IsString()
   @IsNotEmpty()

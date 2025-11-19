@@ -43,8 +43,7 @@ export class AuthService {
     const payload = this.createAuthPayload(player) as AuthPayload;
     const accessToken = this.getToken(payload, 'access');
     const refreshToken = this.getToken(payload, 'refresh');
-    const salt = await bcrypt.genSalt(10);
-    const hashedToken = await bcrypt.hash(refreshToken, salt);
+    const hashedToken = await this.hashPassword(refreshToken);
     const playerId = player.id as string;
     const existingRefreshToken =
       await this.prismaService.refreshToken.findUnique({
@@ -66,7 +65,7 @@ export class AuthService {
     res.status(statusCode).json({ accessToken, player });
   }
 
-  private handleAuthError(error: any, action: string) {
+  private handleError(error: any, action: string) {
     this.logger.error(`Failed to ${action}`, (error as Error).stack);
 
     if (error instanceof UnauthorizedException) {
@@ -94,7 +93,7 @@ export class AuthService {
     });
   }
 
-  private async hashPassword(password: string): Promise<string> {
+  private async hashPassword(password: string) {
     const salt = await bcrypt.genSalt(10);
 
     return bcrypt.hash(password, salt);
@@ -115,7 +114,7 @@ export class AuthService {
 
       await this.handleSuccessfulAuth(rest, res, 201);
     } catch (error) {
-      this.handleAuthError(error, 'sign up user');
+      this.handleError(error, 'sign up user');
     }
   }
 
@@ -123,7 +122,7 @@ export class AuthService {
     try {
       await this.handleSuccessfulAuth(player, res);
     } catch (error) {
-      this.handleAuthError(error, 'sign in user');
+      this.handleError(error, 'sign in user');
     }
   }
 
@@ -157,7 +156,7 @@ export class AuthService {
 
       res.json({ accessToken });
     } catch (error) {
-      this.handleAuthError(error, 'refresh token');
+      this.handleError(error, 'refresh token');
     }
   }
 
@@ -175,7 +174,7 @@ export class AuthService {
       });
       res.sendStatus(200);
     } catch (error) {
-      this.handleAuthError(error, 'sign out user');
+      this.handleError(error, 'sign out user');
     }
   }
 

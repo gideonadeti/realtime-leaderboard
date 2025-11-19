@@ -105,6 +105,18 @@ export class AuthService {
     return rest;
   }
 
+  async deleteAccount(playerId: string, res: Response) {
+    try {
+      await this.prismaService.player.delete({
+        where: { id: playerId },
+      });
+
+      res.status(200).json({ message: 'Account deleted successfully' });
+    } catch (error) {
+      this.handleError(error, 'delete account');
+    }
+  }
+
   // async validateClient(client: Socket & { user?: any }) {
   //   const token = (client.handshake.auth as { token: string | undefined })
   //     .token;

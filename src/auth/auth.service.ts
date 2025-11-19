@@ -105,7 +105,7 @@ export class AuthService {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === 'P2002'
     ) {
-      throw new ConflictException('Email is already in use');
+      throw new ConflictException('Username is already taken');
     }
 
     throw new InternalServerErrorException(`Failed to ${action}`);

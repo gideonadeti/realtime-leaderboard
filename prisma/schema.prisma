@@ -20,7 +20,7 @@ model Player {
 model Game {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   playerId  String   @db.ObjectId
-  duration  Int // in milliseconds
+  duration  Int // in seconds
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

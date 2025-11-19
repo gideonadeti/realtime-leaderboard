@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 
-import { AuthPayload } from 'src/auth/auth-payload.interface';
+import { AuthPayload } from 'src/auth/auth-payload/auth-payload.interface';
 import { AuthService } from 'src/auth/auth.service';
 import { wsClerkAuthMiddleware } from 'src/auth/middlewares/ws-clerk-auth.middleware';
 

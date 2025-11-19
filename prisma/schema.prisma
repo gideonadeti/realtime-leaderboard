@@ -18,13 +18,14 @@ model Player {
 }
 
 model Game {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  outcome   GameOutcome
-  playerId  String      @db.ObjectId
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId  String   @db.ObjectId
+  duration  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  player Player @relation(fields: [playerId], references: [id])
+  outcome GameOutcome
+  player  Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
 }
 
 enum GameOutcome {

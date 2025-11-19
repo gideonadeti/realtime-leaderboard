@@ -9,7 +9,7 @@ import {
 
 import { AuthPayload } from 'src/auth/auth-payload/auth-payload.interface';
 import { AuthService } from 'src/auth/auth.service';
-import { wsClerkAuthMiddleware } from 'src/auth/middlewares/ws-clerk-auth.middleware';
+// import { wsClerkAuthMiddleware } from 'src/auth/middlewares/ws-clerk-auth.middleware';
 
 @WebSocketGateway()
 export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
@@ -24,7 +24,7 @@ export class LeaderboardGateway implements OnGatewayInit, OnGatewayConnection {
 
   afterInit(server: Server) {
     server.use((socket: Socket & { user: any }, next) => {
-      wsClerkAuthMiddleware(this.authService)(socket, next).catch(next);
+      // wsClerkAuthMiddleware(this.authService)(socket, next).catch(next);
     });
 
     this.logger.log('WebSocket server initialized');

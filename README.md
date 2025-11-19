@@ -57,6 +57,10 @@ CLERK_PUBLISHABLE_KEY="<your-clerk-publishable-key>"
 CLERK_SECRET_KEY="<your-clerk-secret-key>"
 
 FRONTEND_BASE_URL="<your-frontend-base-url>"
+SWAGGER_BASE_URL="<your-swagger-ui-base-url>"        # Optional, defaults to FRONTEND_BASE_URL
+
+REFRESH_CSRF_HEADER_NAME="x-refresh-csrf-token"      # Optional, defaults shown
+REFRESH_CSRF_SECRET="<random-string-for-refresh>"    # Required when header name set
 
 REDIS_USERNAME="<your-redis-username>"
 REDIS_PASSWORD="<your-redis-password>"
@@ -106,6 +110,12 @@ Swagger API docs will be available at:
 
 Next.js app will be available at:
 `http://localhost:3001`
+
+### Refresh token security
+
+- Refresh tokens are issued as `SameSite=None`, `Secure`, and `HttpOnly` cookies in production so that both the external frontend and Swagger UI can access the `/auth/refresh` endpoint.
+- Every refresh request must include the header defined in `REFRESH_CSRF_HEADER_NAME` (defaults to `x-refresh-csrf-token`) whose value matches `REFRESH_CSRF_SECRET`. Configure your frontend HTTP client and Swagger UI "Authorize" request interceptor to attach this header.
+- For local development over HTTP, set `NODE_ENV=development` so cookies fall back to `SameSite=Lax` and `Secure=false`.
 
 ## Live Deployment
 

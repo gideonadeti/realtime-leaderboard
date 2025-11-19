@@ -1,5 +1,13 @@
 import { ApiBody } from '@nestjs/swagger';
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Player } from '@prisma/client';
 
@@ -7,6 +15,8 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { UserId } from 'src/user-id/user-id.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -26,5 +36,11 @@ export class AuthController {
     @Res() res: Response,
   ) {
     return this.authService.signIn(req.user, res);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('account')
+  async deleteAccount(@UserId() userId: string, @Res() res: Response) {
+    return this.authService.deleteAccount(userId, res);
   }
 }

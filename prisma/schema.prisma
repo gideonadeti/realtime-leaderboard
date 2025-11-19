@@ -14,8 +14,8 @@ model Player {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  refreshTokens RefreshToken[]
-  games         Game[]
+  refreshToken RefreshToken?
+  games        Game[]
 }
 
 model RefreshToken {

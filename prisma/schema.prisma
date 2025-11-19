@@ -8,55 +8,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Player {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  email     String   @unique
-  password  String?
-  clerkId   String?  @unique
+  username  String   @unique
+  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  role         UserRole      @default(NADMIN)
-  refreshToken RefreshToken?
-  activities   Activity[]
-  scores       Score[]
-}
-
-enum UserRole {
-  ADMIN
-  NADMIN
+  refreshTokens RefreshToken[]
+  games         Game[]
 }
 
 model RefreshToken {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @unique @db.ObjectId
+  playerId  String   @unique @db.ObjectId
   value     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 }
 
-model Activity {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String   @unique
-  adminId   String   @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Game {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  outcome   GameOutcome
+  playerId  String      @db.ObjectId
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
-  admin  User    @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  scores Score[]
+  player Player @relation(fields: [playerId], references: [id])
 }
 
-model Score {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  value      Int
-  userId     String   @db.ObjectId
-  activityId String   @db.ObjectId
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+enum GameOutcome {
+  WON
+  LOST
 }

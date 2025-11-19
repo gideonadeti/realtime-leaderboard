@@ -2,8 +2,7 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { Socket } from 'socket.io';
-import { verifyToken } from '@clerk/express';
+// import { Socket } from 'socket.io';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, Player } from '@prisma/client';
 import {
@@ -197,18 +196,18 @@ export class AuthService {
     return rest;
   }
 
-  async validateClient(client: Socket & { user?: any }) {
-    const token = (client.handshake.auth as { token: string | undefined })
-      .token;
+  // async validateClient(client: Socket & { user?: any }) {
+  //   const token = (client.handshake.auth as { token: string | undefined })
+  //     .token;
 
-    if (!token) {
-      throw new UnauthorizedException('No JWT token found');
-    }
+  //   if (!token) {
+  //     throw new UnauthorizedException('No JWT token found');
+  //   }
 
-    const payload = await verifyToken(token, {
-      secretKey: this.configService.get('JWT_ACCESS_SECRET') as string,
-    });
+  //   const payload = await verifyToken(token, {
+  //     secretKey: this.configService.get('JWT_ACCESS_SECRET') as string,
+  //   });
 
-    client.user = payload;
-  }
+  //   client.user = payload;
+  // }
 }

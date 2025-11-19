@@ -1,16 +1,16 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class SignInDto {
   /**
-   * User's email
-   * @example "johndoe@gmail.com"
+   * Player's username
+   * @example "johndoe"
    */
-  @IsEmail()
+  @IsString()
   @IsNotEmpty()
-  email: string;
+  username: string;
 
   /**
-   * User's password
+   * Player's password
    * @example "strongPassword"
    */
   @IsString()

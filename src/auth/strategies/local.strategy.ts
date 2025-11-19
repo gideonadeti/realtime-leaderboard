@@ -12,28 +12,28 @@ import { AuthService } from '../auth.service';
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
-    super({ usernameField: 'email' });
+    super();
   }
 
   private logger = new Logger(AuthService.name);
 
-  async validate(email: string, password: string) {
+  async validate(username: string, password: string) {
     try {
-      const user = await this.authService.validateUser(email, password);
+      const player = await this.authService.validatePlayer(username, password);
 
-      if (!user) {
-        throw new UnauthorizedException('Invalid email or password');
+      if (!player) {
+        throw new UnauthorizedException('Invalid username or password');
       }
 
-      return user;
+      return player;
     } catch (error) {
-      this.logger.error('Failed to validate user', (error as Error).stack);
+      this.logger.error('Failed to validate player', (error as Error).stack);
 
       if (error instanceof UnauthorizedException) {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to validate user');
+      throw new InternalServerErrorException('Failed to validate player');
     }
   }
 }

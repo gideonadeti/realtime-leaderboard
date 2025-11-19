@@ -13,9 +13,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const frontendBaseUrl = configService.get<string>('FRONTEND_BASE_URL');
+  const swaggerBaseUrl = configService.get<string>('SWAGGER_BASE_URL');
+  const allowedOrigins = [frontendBaseUrl, swaggerBaseUrl].filter(
+    (origin): origin is string => Boolean(origin),
+  );
 
   app.enableCors({
-    origin: [frontendBaseUrl],
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    credentials: true,
   });
 
   app.setGlobalPrefix('api/v1');

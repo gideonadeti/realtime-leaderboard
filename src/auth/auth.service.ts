@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Socket } from 'socket.io';
 import { verifyToken } from '@clerk/express';
 import { ConfigService } from '@nestjs/config';
+import { Prisma, Player } from '@prisma/client';
 import {
   ConflictException,
   Injectable,
@@ -13,10 +14,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { Prisma, User } from 'generated/prisma';
 import { SignUpDto } from './dto/sign-up.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AuthPayload } from './auth-payload.interface';
+import { AuthPayload } from './auth-payload/auth-payload.interface';
 
 const REFRESH_COOKIE_CONFIG = {
   httpOnly: true,
@@ -37,34 +37,34 @@ export class AuthService {
   private logger = new Logger(AuthService.name);
 
   private async handleSuccessfulAuth(
-    user: Partial<User>,
+    player: Partial<Player>,
     res: Response,
     statusCode: number = 200,
   ) {
-    const payload = this.createAuthPayload(user) as AuthPayload;
+    const payload = this.createAuthPayload(player) as AuthPayload;
     const accessToken = this.getToken(payload, 'access');
     const refreshToken = this.getToken(payload, 'refresh');
     const salt = await bcrypt.genSalt(10);
     const hashedToken = await bcrypt.hash(refreshToken, salt);
-    const userId = user.id as string;
+    const playerId = player.id as string;
     const existingRefreshToken =
       await this.prismaService.refreshToken.findUnique({
-        where: { userId },
+        where: { playerId },
       });
 
     if (existingRefreshToken) {
       await this.prismaService.refreshToken.update({
-        where: { userId },
+        where: { playerId },
         data: { value: hashedToken },
       });
     } else {
       await this.prismaService.refreshToken.create({
-        data: { userId, value: hashedToken },
+        data: { playerId, value: hashedToken },
       });
     }
 
     res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_CONFIG);
-    res.status(statusCode).json({ accessToken, user });
+    res.status(statusCode).json({ accessToken, player });
   }
 
   private handleAuthError(error: any, action: string) {
@@ -82,8 +82,8 @@ export class AuthService {
     throw new InternalServerErrorException(`Failed to ${action}`);
   }
 
-  private createAuthPayload(user: Partial<User>) {
-    return { email: user.email, sub: user.id, role: user.role, jti: uuidv4() };
+  private createAuthPayload(player: Partial<Player>) {
+    return { username: player.username, sub: player.id, jti: uuidv4() };
   }
 
   private getToken(payload: AuthPayload, type: 'access' | 'refresh') {
@@ -104,7 +104,7 @@ export class AuthService {
   async signUp(signUpDto: SignUpDto, res: Response) {
     try {
       const hashedPassword = await this.hashPassword(signUpDto.password);
-      const user = await this.prismaService.user.create({
+      const player = await this.prismaService.player.create({
         data: {
           ...signUpDto,
           password: hashedPassword,
@@ -112,7 +112,7 @@ export class AuthService {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...rest } = user;
+      const { password, ...rest } = player;
 
       await this.handleSuccessfulAuth(rest, res, 201);
     } catch (error) {
@@ -120,16 +120,16 @@ export class AuthService {
     }
   }
 
-  async signIn(user: Partial<User>, res: Response) {
+  async signIn(player: Partial<Player>, res: Response) {
     try {
-      await this.handleSuccessfulAuth(user, res);
+      await this.handleSuccessfulAuth(player, res);
     } catch (error) {
       this.handleAuthError(error, 'sign in user');
     }
   }
 
   async refresh(req: Request, res: Response) {
-    const user = req.user as Partial<User>;
+    const player = req.user as Partial<Player>;
     const refreshTokenFromCookie = (req.cookies as { refreshToken: string })[
       'refreshToken'
     ];
@@ -137,7 +137,7 @@ export class AuthService {
     try {
       const existingRefreshToken =
         await this.prismaService.refreshToken.findUnique({
-          where: { userId: user.id },
+          where: { playerId: player.id },
         });
 
       if (!existingRefreshToken) {
@@ -153,7 +153,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      const payload = this.createAuthPayload(user) as AuthPayload;
+      const payload = this.createAuthPayload(player) as AuthPayload;
       const accessToken = this.getToken(payload, 'access');
 
       res.json({ accessToken });
@@ -162,10 +162,10 @@ export class AuthService {
     }
   }
 
-  async signOut(user: Partial<User>, res: Response) {
+  async signOut(player: Partial<Player>, res: Response) {
     try {
       await this.prismaService.refreshToken.delete({
-        where: { userId: user.id },
+        where: { playerId: player.id },
       });
 
       res.clearCookie('refreshToken', {
@@ -180,20 +180,19 @@ export class AuthService {
     }
   }
 
-  async validateUser(email: string, pass: string) {
-    const user = await this.prismaService.user.findUnique({
-      where: { email },
+  async validatePlayer(username: string, pass: string) {
+    const player = await this.prismaService.player.findUnique({
+      where: { username },
     });
 
-    if (!user) return null;
-    if (!user.password) return null;
+    if (!player) return null;
 
-    const isCorrectPassword = await bcrypt.compare(pass, user.password);
+    const isCorrectPassword = await bcrypt.compare(pass, player.password);
 
     if (!isCorrectPassword) return null;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...rest } = user;
+    const { password, ...rest } = player;
 
     return rest;
   }
@@ -203,11 +202,11 @@ export class AuthService {
       .token;
 
     if (!token) {
-      throw new UnauthorizedException('No Clerk token found');
+      throw new UnauthorizedException('No JWT token found');
     }
 
     const payload = await verifyToken(token, {
-      secretKey: this.configService.get('CLERK_SECRET_KEY') as string,
+      secretKey: this.configService.get('JWT_ACCESS_SECRET') as string,
     });
 
     client.user = payload;

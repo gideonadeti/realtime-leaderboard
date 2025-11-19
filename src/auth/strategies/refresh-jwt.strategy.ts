@@ -4,8 +4,6 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 
-import { UserRole } from 'generated/prisma';
-
 @Injectable()
 export class RefreshJwtStrategy extends PassportStrategy(
   Strategy,
@@ -23,7 +21,7 @@ export class RefreshJwtStrategy extends PassportStrategy(
     });
   }
 
-  validate(payload: { sub: string; email: string; role: UserRole }) {
-    return { id: payload.sub, email: payload.email, role: payload.role };
+  validate(payload: { sub: string; username: string }) {
+    return { id: payload.sub, username: payload.username };
   }
 }

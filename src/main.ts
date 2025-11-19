@@ -17,6 +17,8 @@ async function bootstrap() {
   app.enableCors({
     origin: [frontendBaseUrl],
   });
+
+  app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -29,22 +31,23 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Real-time Leaderboard')
-    .setDescription('A real-time leaderboard system for ranking and scoring.')
+    .setTitle('Battleship Real-time Leaderboard')
+    .setDescription(
+      'A real-time leaderboard application for the Battleship game.',
+    )
     .setVersion('1.0.0')
     .addBearerAuth()
-    .addTag('Auth')
-    .addTag('Activities')
-    .addTag('Scores')
     .build();
+
   const options: SwaggerDocumentOptions = {
     operationIdFactory: (_controllerKey: string, methodKey: string) =>
       methodKey,
   };
+
   const documentFactory = () =>
     SwaggerModule.createDocument(app, config, options);
 
-  SwaggerModule.setup('api/documentation', app, documentFactory);
+  SwaggerModule.setup('api/v1/documentation', app, documentFactory);
 
   await app.listen(process.env.PORT ?? 3000);
 }

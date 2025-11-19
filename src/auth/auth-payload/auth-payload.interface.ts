@@ -1,8 +1,5 @@
-import { UserRole } from 'generated/prisma';
-
 export interface AuthPayload {
-  email: string;
+  username: string;
   sub: string;
-  role: UserRole;
   jti: string;
 }

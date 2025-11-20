@@ -147,4 +147,60 @@ export class GamesService {
       this.handleError(error, 'delete game');
     }
   }
+
+  async findDurationLeaderboard() {
+    try {
+      const leaderboard = await this.redisService.getBestDurationLeaderboard();
+      const players = await Promise.all(
+        leaderboard.map(async ({ userId, duration }, index) => {
+          const player = await this.prismaService.player.findUnique({
+            where: { id: userId },
+          });
+
+          if (!player) {
+            return null;
+          }
+
+          return {
+            id: player.id,
+            username: player.username,
+            duration,
+            rank: index + 1,
+          };
+        }),
+      );
+
+      return players;
+    } catch (error) {
+      this.handleError(error, 'fetch duration leaderboard');
+    }
+  }
+
+  async findMostGamesLeaderboard() {
+    try {
+      const leaderboard = await this.redisService.getMostGamesLeaderboard();
+      const players = await Promise.all(
+        leaderboard.map(async ({ userId, count }, index) => {
+          const player = await this.prismaService.player.findUnique({
+            where: { id: userId },
+          });
+
+          if (!player) {
+            return null;
+          }
+
+          return {
+            id: player.id,
+            username: player.username,
+            count,
+            rank: index + 1,
+          };
+        }),
+      );
+
+      return players;
+    } catch (error) {
+      this.handleError(error, 'fetch most games leaderboard');
+    }
+  }
 }

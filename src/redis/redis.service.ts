@@ -22,11 +22,18 @@ export class RedisService implements OnModuleInit {
     });
   }
 
-  async updateLeaderboards(userId: string, duration: number) {
-    await Promise.all([
-      this.incrementGameCount(userId),
-      this.updateBestDuration(userId, duration),
-    ]);
+  async updateLeaderboards(
+    userId: string,
+    duration: number,
+    options?: { includeDuration?: boolean },
+  ) {
+    const tasks: Promise<unknown>[] = [this.incrementGameCount(userId)];
+
+    if (options?.includeDuration ?? true) {
+      tasks.push(this.updateBestDuration(userId, duration));
+    }
+
+    await Promise.all(tasks);
   }
 
   /**
@@ -89,15 +96,6 @@ export class RedisService implements OnModuleInit {
     }
 
     return users;
-  }
-
-  async getLeaderboards() {
-    const [bestDurationLeaderboard, mostGamesLeaderboard] = await Promise.all([
-      this.getBestDurationLeaderboard(),
-      this.getMostGamesLeaderboard(),
-    ]);
-
-    return { bestDurationLeaderboard, mostGamesLeaderboard };
   }
 
   async removeUser(userId: string) {

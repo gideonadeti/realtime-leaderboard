@@ -22,6 +22,13 @@ export class RedisService implements OnModuleInit {
     });
   }
 
+  async updateLeaderboard(userId: string, duration: number) {
+    await Promise.all([
+      this.incrementGameCount(userId),
+      this.updateBestDuration(userId, duration),
+    ]);
+  }
+
   /**
    * Increment the game count for a user (for most games played leaderboard)
    */

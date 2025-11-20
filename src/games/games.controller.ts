@@ -28,6 +28,16 @@ export class GamesController {
     return this.gamesService.findAll(playerId);
   }
 
+  @Get('leaderboard/duration')
+  findDurationLeaderboard() {
+    return this.gamesService.findDurationLeaderboard();
+  }
+
+  @Get('leaderboard/games-played')
+  findMostGamesLeaderboard() {
+    return this.gamesService.findMostGamesLeaderboard();
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string, @UserId() playerId: string) {
     return this.gamesService.remove(id, playerId);

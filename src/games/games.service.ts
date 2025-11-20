@@ -1,3 +1,4 @@
+import { GameOutcome } from '@prisma/client';
 import {
   Injectable,
   InternalServerErrorException,
@@ -39,12 +40,21 @@ export class GamesService {
         },
       });
 
-      // Update the leaderboards
-      await this.redisService.updateLeaderboards(playerId, game.duration);
+      // Update the leaderboards (only include wins in best duration)
+      const includeDuration = game.outcome === GameOutcome.WON;
 
-      // Get the updated leaderboards
-      const { bestDurationLeaderboard, mostGamesLeaderboard } =
-        await this.redisService.getLeaderboards();
+      await this.redisService.updateLeaderboards(playerId, game.duration, {
+        includeDuration,
+      });
+
+      // Get the updated most games leaderboard
+      const mostGamesLeaderboard =
+        await this.redisService.getMostGamesLeaderboard();
+
+      // Get the updated best duration leaderboard
+      const bestDurationLeaderboard = includeDuration
+        ? await this.redisService.getBestDurationLeaderboard()
+        : [];
 
       const durationLeaderboardPlayers = await Promise.all(
         bestDurationLeaderboard.map(async ({ userId, duration }, index) => {
@@ -65,10 +75,12 @@ export class GamesService {
         }),
       );
 
-      this.leaderboardGateway.emitToClients(
-        'leaderboard:duration',
-        durationLeaderboardPlayers,
-      );
+      if (includeDuration) {
+        this.leaderboardGateway.emitToClients(
+          'leaderboard:duration',
+          durationLeaderboardPlayers,
+        );
+      }
 
       const mostGamesLeaderboardPlayers = await Promise.all(
         mostGamesLeaderboard.map(async ({ userId, count }, index) => {

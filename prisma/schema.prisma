@@ -26,6 +26,8 @@ model Game {
 
   outcome GameOutcome
   player  Player      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([playerId, createdAt(sort: Desc)])
 }
 
 enum GameOutcome {

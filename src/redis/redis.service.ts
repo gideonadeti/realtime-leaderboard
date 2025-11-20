@@ -22,7 +22,7 @@ export class RedisService implements OnModuleInit {
     });
   }
 
-  async updateLeaderboard(userId: string, duration: number) {
+  async updateLeaderboards(userId: string, duration: number) {
     await Promise.all([
       this.incrementGameCount(userId),
       this.updateBestDuration(userId, duration),
@@ -89,6 +89,15 @@ export class RedisService implements OnModuleInit {
     }
 
     return users;
+  }
+
+  async getLeaderboards() {
+    const [bestDurationLeaderboard, mostGamesLeaderboard] = await Promise.all([
+      this.getBestDurationLeaderboard(),
+      this.getMostGamesLeaderboard(),
+    ]);
+
+    return { bestDurationLeaderboard, mostGamesLeaderboard };
   }
 
   async removeUser(userId: string) {

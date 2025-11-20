@@ -7,10 +7,16 @@ import {
 
 import { CreateGameDto } from './dto/create-game.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
+import { LeaderboardGateway } from 'src/leaderboard/leaderboard.gateway';
 
 @Injectable()
 export class GamesService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private redisService: RedisService,
+    private leaderboardGateway: LeaderboardGateway,
+  ) {}
 
   private logger = new Logger(GamesService.name);
 
@@ -26,12 +32,69 @@ export class GamesService {
 
   async create(createGameDto: CreateGameDto, playerId: string) {
     try {
-      return await this.prismaService.game.create({
+      const game = await this.prismaService.game.create({
         data: {
           playerId,
           ...createGameDto,
         },
       });
+
+      // Update the leaderboards
+      await this.redisService.updateLeaderboards(playerId, game.duration);
+
+      // Get the updated leaderboards
+      const { bestDurationLeaderboard, mostGamesLeaderboard } =
+        await this.redisService.getLeaderboards();
+
+      const durationLeaderboardPlayers = await Promise.all(
+        bestDurationLeaderboard.map(async ({ userId, duration }, index) => {
+          const player = await this.prismaService.player.findUnique({
+            where: { id: userId },
+          });
+
+          if (!player) {
+            return null;
+          }
+
+          return {
+            id: player.id,
+            username: player.username,
+            duration,
+            rank: index + 1,
+          };
+        }),
+      );
+
+      this.leaderboardGateway.emitToClients(
+        'leaderboard:duration',
+        durationLeaderboardPlayers,
+      );
+
+      const mostGamesLeaderboardPlayers = await Promise.all(
+        mostGamesLeaderboard.map(async ({ userId, count }, index) => {
+          const player = await this.prismaService.player.findUnique({
+            where: { id: userId },
+          });
+
+          if (!player) {
+            return null;
+          }
+
+          return {
+            id: player.id,
+            username: player.username,
+            count,
+            rank: index + 1,
+          };
+        }),
+      );
+
+      this.leaderboardGateway.emitToClients(
+        'leaderboard:games-played',
+        mostGamesLeaderboardPlayers,
+      );
+
+      return game;
     } catch (error) {
       this.handleError(error, 'create game');
     }

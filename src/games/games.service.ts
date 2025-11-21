@@ -147,9 +147,18 @@ export class GamesService {
         );
       }
 
+      // Delete the game from database
       await this.prismaService.game.delete({
         where: { id, playerId },
       });
+
+      // Update Redis leaderboards
+      await this.redisService.decrementGameCount(playerId);
+
+      // If it was a win, recalculate best duration
+      if (game.outcome === GameOutcome.WON) {
+        await this.redisService.recalculateBestDuration(playerId);
+      }
 
       return { message: 'Game deleted successfully' };
     } catch (error) {

@@ -12,6 +12,7 @@ import { GamesService } from './games.service';
 import { CreateGameDto } from './dto/create-game.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/user-id/user-id.decorator';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('games')
 @UseGuards(JwtAuthGuard)
@@ -29,11 +30,13 @@ export class GamesController {
   }
 
   @Get('leaderboard/duration')
+  @Public()
   findDurationLeaderboard() {
     return this.gamesService.findDurationLeaderboard();
   }
 
   @Get('leaderboard/games-played')
+  @Public()
   findMostGamesLeaderboard() {
     return this.gamesService.findMostGamesLeaderboard();
   }

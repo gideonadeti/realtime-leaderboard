@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   DocumentBuilder,
   SwaggerDocumentOptions,
@@ -11,18 +10,8 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
-  const frontendBaseUrl = configService.get<string>('FRONTEND_BASE_URL');
-  const swaggerBaseUrl = configService.get<string>('SWAGGER_BASE_URL');
-  const battleshipBaseUrl = configService.get<string>('BATTLESHIP_BASE_URL');
-  const allowedOrigins = [
-    frontendBaseUrl,
-    swaggerBaseUrl,
-    battleshipBaseUrl,
-  ].filter((origin): origin is string => Boolean(origin));
-
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: true,
   });
 
   app.setGlobalPrefix('api/v1');

@@ -45,4 +45,9 @@ export class GamesController {
   remove(@Param('id') id: string, @UserId() playerId: string) {
     return this.gamesService.remove(id, playerId);
   }
+
+  @Post('rebuild-leaderboards')
+  rebuildLeaderboards() {
+    return this.gamesService.rebuildLeaderboards();
+  }
 }

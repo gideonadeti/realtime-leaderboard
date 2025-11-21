@@ -1,12 +1,19 @@
 import Redis from 'ioredis';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { GameOutcome } from '@prisma/client';
+
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class RedisService implements OnModuleInit {
   private client: Redis;
+  private logger = new Logger(RedisService.name);
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private prismaService: PrismaService,
+  ) {}
 
   onModuleInit() {
     const username = this.configService.get<string>('REDIS_USERNAME');
@@ -27,7 +34,7 @@ export class RedisService implements OnModuleInit {
     duration: number,
     options?: { includeDuration?: boolean },
   ) {
-    const tasks: Promise<unknown>[] = [this.incrementGameCount(userId)];
+    const tasks: Promise<string | number>[] = [this.incrementGameCount(userId)];
 
     if (options?.includeDuration ?? true) {
       tasks.push(this.updateBestDuration(userId, duration));
@@ -110,5 +117,72 @@ export class RedisService implements OnModuleInit {
     );
 
     return { gamesPlayed, bestDuration };
+  }
+
+  /**
+   * Set exact game count for a user (for sync operations)
+   */
+  async setGameCount(userId: string, count: number) {
+    if (count <= 0) {
+      return this.client.zrem('leaderboard:games-played', userId);
+    }
+
+    return this.client.zadd('leaderboard:games-played', count, userId);
+  }
+
+  /**
+   * Set exact best duration for a user (for sync operations)
+   */
+  async setBestDuration(userId: string, duration: number) {
+    return this.client.zadd('leaderboard:best-duration', duration, userId);
+  }
+
+  /**
+   * Clear all leaderboard data (for rebuild operations)
+   */
+  async clearLeaderboards() {
+    await Promise.all([
+      this.client.del('leaderboard:games-played'),
+      this.client.del('leaderboard:best-duration'),
+    ]);
+  }
+
+  /**
+   * Rebuild Redis leaderboards from database when things go wrong
+   */
+  async rebuildFromDatabase() {
+    this.logger.log('Rebuilding Redis leaderboards from database...');
+
+    // Clear Redis first
+    await this.clearLeaderboards();
+
+    // Get all players and their games
+    const players = await this.prismaService.player.findMany({
+      include: { games: true },
+    });
+
+    let processed = 0;
+
+    for (const player of players) {
+      // Count total games
+      const totalGames = player.games.length;
+
+      if (totalGames > 0) {
+        await this.setGameCount(player.id, totalGames);
+      }
+
+      // Find best duration from wins only
+      const wins = player.games.filter((g) => g.outcome === GameOutcome.WON);
+
+      if (wins.length > 0) {
+        const bestTime = Math.min(...wins.map((g) => g.duration));
+
+        await this.setBestDuration(player.id, bestTime);
+      }
+
+      processed++;
+    }
+
+    this.logger.log(`Rebuilt leaderboards for ${processed} players`);
   }
 }

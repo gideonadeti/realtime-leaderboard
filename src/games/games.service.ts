@@ -31,6 +31,113 @@ export class GamesService {
     throw new InternalServerErrorException(`Failed to ${action}`);
   }
 
+  /**
+   * Helper method to build duration leaderboard players from Redis data
+   */
+  private async buildDurationLeaderboardPlayers(
+    leaderboardData: { userId: string; duration: number }[],
+  ) {
+    const players = await Promise.all(
+      leaderboardData.map(async ({ userId, duration }, index) => {
+        const player = await this.prismaService.player.findUnique({
+          where: { id: userId },
+        });
+
+        return player
+          ? {
+              id: player.id,
+              username: player.username,
+              bestDuration: duration,
+              rank: index + 1,
+            }
+          : null;
+      }),
+    );
+
+    return players.filter(Boolean);
+  }
+
+  /**
+   * Helper method to build games played leaderboard players from Redis data
+   */
+  private async buildGamesPlayedLeaderboardPlayers(
+    leaderboardData: { userId: string; count: number }[],
+  ) {
+    const players = await Promise.all(
+      leaderboardData.map(async ({ userId, count }, index) => {
+        const player = await this.prismaService.player.findUnique({
+          where: { id: userId },
+        });
+
+        return player
+          ? {
+              id: player.id,
+              username: player.username,
+              gamesPlayed: count,
+              rank: index + 1,
+            }
+          : null;
+      }),
+    );
+
+    return players.filter(Boolean);
+  }
+
+  /**
+   * Helper method to safely execute Redis operations with error handling
+   */
+  private async safeRedisOperation<T>(
+    operation: () => Promise<T>,
+    context: string,
+  ) {
+    try {
+      return await operation();
+    } catch (error) {
+      this.logger.error(
+        `Redis operation failed: ${context}`,
+        (error as Error).stack,
+      );
+
+      return null;
+    }
+  }
+
+  /**
+   * Helper method to emit updated leaderboards to all clients
+   */
+  private async emitUpdatedLeaderboards(
+    options: { emitGamesPlayed?: boolean; emitDuration?: boolean } = {},
+  ) {
+    const { emitGamesPlayed = true, emitDuration = false } = options;
+
+    if (emitGamesPlayed) {
+      const mostGamesLeaderboard =
+        await this.redisService.getMostGamesLeaderboard();
+
+      const mostGamesPlayers =
+        await this.buildGamesPlayedLeaderboardPlayers(mostGamesLeaderboard);
+
+      this.leaderboardGateway.emitToClients(
+        'leaderboard:games-played',
+        mostGamesPlayers,
+      );
+    }
+
+    if (emitDuration) {
+      const bestDurationLeaderboard =
+        await this.redisService.getBestDurationLeaderboard();
+
+      const durationPlayers = await this.buildDurationLeaderboardPlayers(
+        bestDurationLeaderboard,
+      );
+
+      this.leaderboardGateway.emitToClients(
+        'leaderboard:duration',
+        durationPlayers,
+      );
+    }
+  }
+
   async create(createGameDto: CreateGameDto, playerId: string) {
     try {
       const game = await this.prismaService.game.create({
@@ -43,77 +150,19 @@ export class GamesService {
       // Update the leaderboards (only include wins in best duration)
       const includeDuration = game.outcome === GameOutcome.WON;
 
-      try {
-        await this.redisService.updateLeaderboards(playerId, game.duration, {
-          includeDuration,
-        });
-      } catch (redisError) {
-        this.logger.error(
-          `Redis update failed for game ${game.id}, player ${playerId}`,
-          (redisError as Error).stack,
-        );
-        // Don't throw - game is already saved to DB
-        // Consider implementing a retry mechanism or dead letter queue here
-      }
-
-      // Get the updated most games leaderboard
-      const mostGamesLeaderboard =
-        await this.redisService.getMostGamesLeaderboard();
-
-      // Get the updated best duration leaderboard
-      const bestDurationLeaderboard = includeDuration
-        ? await this.redisService.getBestDurationLeaderboard()
-        : [];
-
-      const durationLeaderboardPlayers = await Promise.all(
-        bestDurationLeaderboard.map(async ({ userId, duration }, index) => {
-          const player = await this.prismaService.player.findUnique({
-            where: { id: userId },
-          });
-
-          if (!player) {
-            return null;
-          }
-
-          return {
-            id: player.id,
-            username: player.username,
-            duration,
-            rank: index + 1,
-          };
-        }),
+      await this.safeRedisOperation(
+        () =>
+          this.redisService.updateLeaderboards(playerId, game.duration, {
+            includeDuration,
+          }),
+        `game creation for game ${game.id}, player ${playerId}`,
       );
 
-      if (includeDuration) {
-        this.leaderboardGateway.emitToClients(
-          'leaderboard:duration',
-          durationLeaderboardPlayers,
-        );
-      }
-
-      const mostGamesLeaderboardPlayers = await Promise.all(
-        mostGamesLeaderboard.map(async ({ userId, count }, index) => {
-          const player = await this.prismaService.player.findUnique({
-            where: { id: userId },
-          });
-
-          if (!player) {
-            return null;
-          }
-
-          return {
-            id: player.id,
-            username: player.username,
-            gamesCount: count,
-            rank: index + 1,
-          };
-        }),
-      );
-
-      this.leaderboardGateway.emitToClients(
-        'leaderboard:games-played',
-        mostGamesLeaderboardPlayers,
-      );
+      // Emit updated leaderboards
+      await this.emitUpdatedLeaderboards({
+        emitGamesPlayed: true,
+        emitDuration: includeDuration,
+      });
 
       return game;
     } catch (error) {
@@ -153,62 +202,24 @@ export class GamesService {
       });
 
       // Update Redis leaderboards
-      await this.redisService.decrementGameCount(playerId);
+      await this.safeRedisOperation(
+        () => this.redisService.decrementGameCount(playerId),
+        `decrementing game count for player ${playerId}`,
+      );
 
       // If it was a win, recalculate best duration
       if (game.outcome === GameOutcome.WON) {
-        await this.redisService.recalculateBestDuration(playerId);
+        await this.safeRedisOperation(
+          () => this.redisService.recalculateBestDuration(playerId),
+          `recalculating best duration for player ${playerId}`,
+        );
       }
 
       // Emit updated leaderboards to all clients
-      const mostGamesLeaderboard =
-        await this.redisService.getMostGamesLeaderboard();
-      const mostGamesLeaderboardPlayers = await Promise.all(
-        mostGamesLeaderboard.map(async ({ userId, count }, index) => {
-          const player = await this.prismaService.player.findUnique({
-            where: { id: userId },
-          });
-          return player
-            ? {
-                id: player.id,
-                username: player.username,
-                gamesPlayed: count,
-                rank: index + 1,
-              }
-            : null;
-        }),
-      );
-
-      this.leaderboardGateway.emitToClients(
-        'leaderboard:games-played',
-        mostGamesLeaderboardPlayers.filter(Boolean),
-      );
-
-      // If it was a win, also emit updated duration leaderboard
-      if (game.outcome === GameOutcome.WON) {
-        const bestDurationLeaderboard =
-          await this.redisService.getBestDurationLeaderboard();
-        const durationLeaderboardPlayers = await Promise.all(
-          bestDurationLeaderboard.map(async ({ userId, duration }, index) => {
-            const player = await this.prismaService.player.findUnique({
-              where: { id: userId },
-            });
-            return player
-              ? {
-                  id: player.id,
-                  username: player.username,
-                  duration,
-                  rank: index + 1,
-                }
-              : null;
-          }),
-        );
-
-        this.leaderboardGateway.emitToClients(
-          'leaderboard:duration',
-          durationLeaderboardPlayers.filter(Boolean),
-        );
-      }
+      await this.emitUpdatedLeaderboards({
+        emitGamesPlayed: true,
+        emitDuration: game.outcome === GameOutcome.WON,
+      });
 
       return { message: 'Game deleted successfully' };
     } catch (error) {
@@ -219,26 +230,7 @@ export class GamesService {
   async findDurationLeaderboard() {
     try {
       const leaderboard = await this.redisService.getBestDurationLeaderboard();
-      const players = await Promise.all(
-        leaderboard.map(async ({ userId, duration }, index) => {
-          const player = await this.prismaService.player.findUnique({
-            where: { id: userId },
-          });
-
-          if (!player) {
-            return null;
-          }
-
-          return {
-            id: player.id,
-            username: player.username,
-            duration,
-            rank: index + 1,
-          };
-        }),
-      );
-
-      return players;
+      return this.buildDurationLeaderboardPlayers(leaderboard);
     } catch (error) {
       this.handleError(error, 'fetch duration leaderboard');
     }
@@ -247,26 +239,7 @@ export class GamesService {
   async findMostGamesLeaderboard() {
     try {
       const leaderboard = await this.redisService.getMostGamesLeaderboard();
-      const players = await Promise.all(
-        leaderboard.map(async ({ userId, count }, index) => {
-          const player = await this.prismaService.player.findUnique({
-            where: { id: userId },
-          });
-
-          if (!player) {
-            return null;
-          }
-
-          return {
-            id: player.id,
-            username: player.username,
-            gamesCount: count,
-            rank: index + 1,
-          };
-        }),
-      );
-
-      return players;
+      return this.buildGamesPlayedLeaderboardPlayers(leaderboard);
     } catch (error) {
       this.handleError(error, 'fetch most games leaderboard');
     }

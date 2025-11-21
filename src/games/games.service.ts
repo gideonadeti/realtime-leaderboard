@@ -95,7 +95,7 @@ export class GamesService {
           return {
             id: player.id,
             username: player.username,
-            count,
+            gamesCount: count,
             rank: index + 1,
           };
         }),
@@ -192,7 +192,7 @@ export class GamesService {
           return {
             id: player.id,
             username: player.username,
-            count,
+            gamesCount: count,
             rank: index + 1,
           };
         }),

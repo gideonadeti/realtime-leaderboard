@@ -138,6 +138,61 @@ export class RedisService implements OnModuleInit {
   }
 
   /**
+   * Decrement the game count for a user (for game deletion)
+   */
+  async decrementGameCount(userId: string) {
+    const newCount = await this.client.zincrby(
+      'leaderboard:games-played',
+      -1,
+      userId,
+    );
+
+    const numericCount = Number(newCount);
+
+    // If count reaches 0 or below, remove the user from leaderboard
+    if (numericCount <= 0) {
+      await this.client.zrem('leaderboard:games-played', userId);
+    }
+
+    return numericCount;
+  }
+
+  /**
+   * Recalculate and update best duration for a user after game deletion
+   * This queries the database to find the new best time from remaining wins
+   */
+  async recalculateBestDuration(userId: string) {
+    // Get all remaining wins for this user from database
+    const wins = await this.prismaService.game.findMany({
+      where: {
+        playerId: userId,
+        outcome: GameOutcome.WON,
+      },
+      select: {
+        duration: true,
+      },
+      orderBy: {
+        duration: 'asc',
+      },
+      take: 1,
+    });
+
+    if (wins.length === 0) {
+      // No wins left, remove from best duration leaderboard
+      await this.client.zrem('leaderboard:best-duration', userId);
+
+      return null;
+    } else {
+      // Update with new best duration
+      const bestDuration = wins[0].duration;
+
+      await this.setBestDuration(userId, bestDuration);
+
+      return bestDuration;
+    }
+  }
+
+  /**
    * Clear all leaderboard data (for rebuild operations)
    */
   async clearLeaderboards() {

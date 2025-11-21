@@ -13,6 +13,9 @@ import { CreateGameDto } from './dto/create-game.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserId } from 'src/user-id/user-id.decorator';
 import { Public } from 'src/auth/public.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { PlayerRole } from '@prisma/client';
 
 @Controller('games')
 @UseGuards(JwtAuthGuard)
@@ -47,6 +50,8 @@ export class GamesController {
   }
 
   @Post('rebuild-leaderboards')
+  @UseGuards(RolesGuard)
+  @Roles(PlayerRole.ADMIN)
   rebuildLeaderboards() {
     return this.gamesService.rebuildLeaderboards();
   }

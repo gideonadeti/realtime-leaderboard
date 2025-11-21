@@ -14,7 +14,13 @@ model Player {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  role  PlayerRole @default(NADMIN)
   games Game[]
+}
+
+enum PlayerRole {
+  ADMIN
+  NADMIN
 }
 
 model Game {

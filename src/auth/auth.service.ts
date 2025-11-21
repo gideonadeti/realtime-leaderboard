@@ -52,7 +52,12 @@ export class AuthService {
   }
 
   private createAuthPayload(player: Partial<Player>) {
-    return { username: player.username, sub: player.id, jti: uuidv4() };
+    return {
+      username: player.username,
+      sub: player.id,
+      jti: uuidv4(),
+      role: player.role,
+    };
   }
 
   private async hashPassword(password: string) {

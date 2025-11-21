@@ -43,9 +43,18 @@ export class GamesService {
       // Update the leaderboards (only include wins in best duration)
       const includeDuration = game.outcome === GameOutcome.WON;
 
-      await this.redisService.updateLeaderboards(playerId, game.duration, {
-        includeDuration,
-      });
+      try {
+        await this.redisService.updateLeaderboards(playerId, game.duration, {
+          includeDuration,
+        });
+      } catch (redisError) {
+        this.logger.error(
+          `Redis update failed for game ${game.id}, player ${playerId}`,
+          (redisError as Error).stack,
+        );
+        // Don't throw - game is already saved to DB
+        // Consider implementing a retry mechanism or dead letter queue here
+      }
 
       // Get the updated most games leaderboard
       const mostGamesLeaderboard =
@@ -201,6 +210,16 @@ export class GamesService {
       return players;
     } catch (error) {
       this.handleError(error, 'fetch most games leaderboard');
+    }
+  }
+
+  async rebuildLeaderboards() {
+    try {
+      await this.redisService.rebuildFromDatabase();
+
+      return { message: 'Leaderboards rebuilt successfully' };
+    } catch (error) {
+      this.handleError(error, 'rebuild leaderboards');
     }
   }
 }

@@ -160,6 +160,56 @@ export class GamesService {
         await this.redisService.recalculateBestDuration(playerId);
       }
 
+      // Emit updated leaderboards to all clients
+      const mostGamesLeaderboard =
+        await this.redisService.getMostGamesLeaderboard();
+      const mostGamesLeaderboardPlayers = await Promise.all(
+        mostGamesLeaderboard.map(async ({ userId, count }, index) => {
+          const player = await this.prismaService.player.findUnique({
+            where: { id: userId },
+          });
+          return player
+            ? {
+                id: player.id,
+                username: player.username,
+                gamesPlayed: count,
+                rank: index + 1,
+              }
+            : null;
+        }),
+      );
+
+      this.leaderboardGateway.emitToClients(
+        'leaderboard:games-played',
+        mostGamesLeaderboardPlayers.filter(Boolean),
+      );
+
+      // If it was a win, also emit updated duration leaderboard
+      if (game.outcome === GameOutcome.WON) {
+        const bestDurationLeaderboard =
+          await this.redisService.getBestDurationLeaderboard();
+        const durationLeaderboardPlayers = await Promise.all(
+          bestDurationLeaderboard.map(async ({ userId, duration }, index) => {
+            const player = await this.prismaService.player.findUnique({
+              where: { id: userId },
+            });
+            return player
+              ? {
+                  id: player.id,
+                  username: player.username,
+                  duration,
+                  rank: index + 1,
+                }
+              : null;
+          }),
+        );
+
+        this.leaderboardGateway.emitToClients(
+          'leaderboard:duration',
+          durationLeaderboardPlayers.filter(Boolean),
+        );
+      }
+
       return { message: 'Game deleted successfully' };
     } catch (error) {
       this.handleError(error, 'delete game');

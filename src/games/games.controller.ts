@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Controller,
   Get,
@@ -18,6 +19,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { PlayerRole } from '@prisma/client';
 
 @Controller('games')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 export class GamesController {
   constructor(private readonly gamesService: GamesService) {}

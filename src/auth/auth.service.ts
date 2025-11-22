@@ -121,19 +121,4 @@ export class AuthService {
       this.handleError(error, 'delete account');
     }
   }
-
-  // async validateClient(client: Socket & { user?: any }) {
-  //   const token = (client.handshake.auth as { token: string | undefined })
-  //     .token;
-
-  //   if (!token) {
-  //     throw new UnauthorizedException('No JWT token found');
-  //   }
-
-  //   const payload = await verifyToken(token, {
-  //     secretKey: this.configService.get('JWT_ACCESS_SECRET') as string,
-  //   });
-
-  //   client.user = payload;
-  // }
 }
